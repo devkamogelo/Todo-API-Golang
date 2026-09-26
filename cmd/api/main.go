@@ -6,6 +6,7 @@ import (
 	"todo_api/internal/database"
 	"todo_api/internal/handlers"
 	"todo_api/internal/middleware"
+	"todo_api/internal/store"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -19,6 +20,8 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to load config: ", err)
 	}
+
+	rds := store.NewRedis(cfg)
 
 	var pool *pgxpool.Pool
 	pool, err = database.Connect(cfg.DatabaseURL)
@@ -44,10 +47,12 @@ func main() {
 	})
 
 	router.POST("/auth/register", handlers.CreateUserHandler(pool))
-	router.POST("/auth/login", handlers.LoginHandler(pool, cfg))
+	router.POST("/auth/login", handlers.LoginHandler(pool, cfg, rds))
+	router.POST("/auth/refresh", handlers.RefreshHandler(cfg, rds))
+	router.POST("/auth/logout", handlers.LogoutHandler(cfg, rds))
 
 	protected := router.Group("/todos")
-	protected.Use(middleware.AuthMiddleware(cfg))
+	protected.Use(middleware.AuthMiddleware(cfg, rds))
 
 	{
 		protected.POST("", handlers.CreateTodoHandler(pool))
@@ -57,7 +62,7 @@ func main() {
 		protected.DELETE("/:id", handlers.DeleteTodo(pool))
 	}
 
-	router.GET("/protected", middleware.AuthMiddleware(cfg), handlers.TestProtectedHandler())
+	router.GET("/protected", middleware.AuthMiddleware(cfg, rds), handlers.TestProtectedHandler())
 
 	err = router.Run(":" + cfg.Port)
 	if err != nil {

@@ -1,15 +1,16 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"strings"
-	"time"
 	"todo_api/internal/config"
+	"todo_api/internal/middleware"
 	"todo_api/internal/models"
 	"todo_api/internal/repository"
+	"todo_api/internal/store"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -69,7 +70,7 @@ func CreateUserHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 	}
 }
 
-func LoginHandler(pool *pgxpool.Pool, cfg *config.Config) gin.HandlerFunc {
+func LoginHandler(pool *pgxpool.Pool, cfg *config.Config, rds *store.Redis) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var loginRequest LoginRequest
 
@@ -91,21 +92,85 @@ func LoginHandler(pool *pgxpool.Pool, cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
-		claims := jwt.MapClaims{
-			"user_id": user.ID,
-			"email":   user.Email,
-			"exp":     time.Now().Add(24 * time.Hour).Unix(),
-		}
-
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-		tokenStr, err := token.SignedString([]byte(cfg.JWTSecret))
+		tokens, err := middleware.IssueTokens(user.ID, cfg)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token: " + err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not issue token"})
+			return
 		}
 
-		c.JSON(http.StatusOK, LoginResponse{Token: tokenStr})
+		if err = middleware.Persist(c, rds, tokens); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not persist token"})
+			return
+		}
+
+		middleware.SetAuthCookies(c, tokens)
+
+		c.JSON(http.StatusOK, true)
 	}
+}
+
+func RefreshHandler(cfg *config.Config, rds *store.Redis) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ref, err := middleware.MustCookie(c, "refresh_token")
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			return
+		}
+
+		claims, err := middleware.ParseRefresh(ref, cfg)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			return
+		}
+
+		ctx := context.Background()
+		if _, err := rds.GetUserByJTI(ctx, "refresh: "+claims.ID); err != nil {
+			c.JSON(http.StatusUnauthorized, "token revoked")
+			return
+		}
+
+		_ = rds.DelJTI(ctx, "refresh: "+claims.ID)
+
+		tokens, err := middleware.IssueTokens(claims.Subject, cfg)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not issue token"})
+			return
+		}
+
+		if err = middleware.Persist(c, rds, tokens); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not persist token"})
+			return
+		}
+
+		middleware.SetAuthCookies(c, tokens)
+
+		c.JSON(http.StatusOK, true)
+
+	}
+}
+
+func LogoutHandler(cfg *config.Config, rds *store.Redis) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		acc, _ := c.Cookie("access_token")
+		ref, _ := c.Cookie("refresh_token")
+		ctx := context.Background()
+
+		if acc != "" {
+			if claims, err := middleware.ParseAccess(acc, cfg); err != nil {
+				_ = rds.DelJTI(ctx, claims.ID)
+			}
+		}
+
+		if ref != "" {
+			if claims, err := middleware.ParseRefresh(ref, cfg); err != nil {
+				_ = rds.DelJTI(ctx, claims.ID)
+			}
+		}
+
+		middleware.ClearAuthCookies(c)
+		c.JSON(http.StatusOK, gin.H{"ok": true})
+	}
+
 }
 
 func TestProtectedHandler() gin.HandlerFunc {
