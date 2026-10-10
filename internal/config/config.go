@@ -12,7 +12,7 @@ type Config struct {
 	Port           string
 	AccessSecret   string
 	RefreshSecret  string
-	RedisAddr      string
+	RedisUrl       string
 	FrontendOrigin string
 	Domain         string
 	Secure         string
@@ -30,7 +30,7 @@ func Load() (*Config, error) {
 		Port:           os.Getenv("PORT"),
 		AccessSecret:   os.Getenv("ACCESS_SECRET"),
 		RefreshSecret:  os.Getenv("REFRESH_SECRET"),
-		RedisAddr:      os.Getenv("REDIS_ADDR"),
+		RedisUrl:       os.Getenv("REDIS_URL"),
 		FrontendOrigin: os.Getenv("FRONTEND_ORIGIN"),
 		Domain:         os.Getenv("DOMAIN"),
 		Secure:         os.Getenv("SECURE"),

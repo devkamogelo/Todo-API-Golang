@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"time"
 	"todo_api/internal/config"
 
@@ -10,20 +11,21 @@ import (
 
 type Redis struct{ Client *redis.Client }
 
-func NewRedis(cfg *config.Config) *Redis {
-	addr := cfg.RedisAddr
-	if addr == "" {
-		addr = "localhost:6379"
+func NewRedis(cfg *config.Config) (*Redis, error) {
+	url := cfg.RedisUrl
+	if url == "" {
+		return nil, fmt.Errorf("no redis Url provided")
+	}
+
+	opts, err := redis.ParseURL(url)
+	if err != nil {
+		return nil, fmt.Errorf("invalid redis Url")
 	}
 
 	//remember to defer close.Client when calling this func
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: "",
-		DB:       0,
-	})
+	rdb := redis.NewClient(opts)
 
-	return &Redis{Client: rdb}
+	return &Redis{Client: rdb}, nil
 }
 
 func (r *Redis) SetJTI(ctx context.Context, key string, userId string, exp time.Time) error {

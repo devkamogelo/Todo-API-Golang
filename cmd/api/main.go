@@ -22,7 +22,11 @@ func main() {
 		log.Fatal("Failed to load config: ", err)
 	}
 
-	rds := store.NewRedis(cfg)
+	rds, err := store.NewRedis(cfg)
+
+	if err != nil {
+		log.Fatal("Failed to connect to redis: ", err)
+	}
 
 	var pool *pgxpool.Pool
 	pool, err = database.Connect(cfg.DatabaseURL)
