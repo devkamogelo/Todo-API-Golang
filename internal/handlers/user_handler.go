@@ -103,7 +103,7 @@ func LoginHandler(pool *pgxpool.Pool, cfg *config.Config, rds *store.Redis) gin.
 			return
 		}
 
-		middleware.SetAuthCookies(c, tokens)
+		middleware.SetAuthCookies(c, tokens, cfg)
 
 		c.JSON(http.StatusOK, true)
 	}
@@ -142,7 +142,7 @@ func RefreshHandler(cfg *config.Config, rds *store.Redis) gin.HandlerFunc {
 			return
 		}
 
-		middleware.SetAuthCookies(c, tokens)
+		middleware.SetAuthCookies(c, tokens, cfg)
 
 		c.JSON(http.StatusOK, true)
 
@@ -167,7 +167,7 @@ func LogoutHandler(cfg *config.Config, rds *store.Redis) gin.HandlerFunc {
 			}
 		}
 
-		middleware.ClearAuthCookies(c)
+		middleware.ClearAuthCookies(c, cfg)
 		c.JSON(http.StatusOK, gin.H{"ok": true})
 	}
 

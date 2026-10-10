@@ -8,6 +8,7 @@ import (
 	"todo_api/internal/middleware"
 	"todo_api/internal/store"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -33,6 +34,13 @@ func main() {
 	defer pool.Close()
 
 	var router = gin.Default()
+
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{cfg.FrontendOrigin},
+		AllowMethods:     []string{"GET", "POST", "PUT"},
+		AllowHeaders:     []string{"Content-Type", "Authorization"},
+		AllowCredentials: true,
+	}))
 
 	err = router.SetTrustedProxies(nil)
 	if err != nil {

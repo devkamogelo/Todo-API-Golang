@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 	"todo_api/internal/config"
 	"todo_api/internal/models"
@@ -70,18 +71,28 @@ func Persist(ctx context.Context, r *store.Redis, t *models.Tokens) error {
 	return nil
 }
 
-func SetAuthCookies(c *gin.Context, t *models.Tokens) {
+func SetAuthCookies(c *gin.Context, t *models.Tokens, cfg *config.Config) {
+	b, err := strconv.ParseBool(cfg.Secure)
+	if err != nil {
+		b = true
+	}
+
 	c.SetSameSite(http.SameSiteLaxMode)
 	//domain should be the website name e.g "td-app.com" and secure set to true in production
-	c.SetCookie("access_token", t.Access, int(time.Until(t.ExpAcc).Seconds()), "/", "localhost", false, true)
-	c.SetCookie("refresh_token", t.Refresh, int(time.Until(t.ExpRef).Seconds()), "/", "localhost", false, true)
+	c.SetCookie("access_token", t.Access, int(time.Until(t.ExpAcc).Seconds()), "/", cfg.Domain, b, true)
+	c.SetCookie("refresh_token", t.Refresh, int(time.Until(t.ExpRef).Seconds()), "/", cfg.Domain, b, true)
 }
 
-func ClearAuthCookies(c *gin.Context) {
+func ClearAuthCookies(c *gin.Context, cfg *config.Config) {
+	b, err := strconv.ParseBool(cfg.Secure)
+	if err != nil {
+		b = true
+	}
+
 	c.SetSameSite(http.SameSiteLaxMode)
 	//domain should be the website name e.g "td-app.com" and secure set to true in production
-	c.SetCookie("access_token", "", -1, "/", "localhost", false, true)
-	c.SetCookie("refresh-token", "", -1, "/", "localhost", false, true)
+	c.SetCookie("access_token", "", -1, "/", cfg.Domain, b, true)
+	c.SetCookie("refresh-token", "", -1, "/", cfg.Domain, b, true)
 }
 
 func ParseAccess(tokenStr string, cfg *config.Config) (*jwt.RegisteredClaims, error) {
