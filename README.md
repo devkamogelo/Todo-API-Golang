@@ -15,7 +15,7 @@ A full-stack REST API built with the Gin framework. Features PostgreSQL, Redis, 
 ## 10 API endpoints
 ## Todo Management
 | Method | Endpoint     |       Description       |
-|--------|--------------|--------------------_----|
+|--------|--------------|-------------------------|
 |  GET   |  /todos      | getting all users todos |
 |  GET   |  /todos/:id  | getting a todo by id    |
 |  POST  |  /todos      | creating todos          |
@@ -24,7 +24,7 @@ A full-stack REST API built with the Gin framework. Features PostgreSQL, Redis, 
 
 ## User Management
 | Method | Endpoint     |       Description       |
-|--------|--------------|--------------------_----|
+|--------|--------------|-------------------------|
 |  POST  |  /register   | create a user           |
 |  POST  |  /login      | generate access token   |
 |  POST  |   /refresh   | refresh access token    |
