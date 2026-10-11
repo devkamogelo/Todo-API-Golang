@@ -92,7 +92,7 @@ func ClearAuthCookies(c *gin.Context, cfg *config.Config) {
 	c.SetSameSite(http.SameSiteLaxMode)
 	//domain should be the website name e.g "td-app.com" and secure set to true in production
 	c.SetCookie("access_token", "", -1, "/", cfg.Domain, b, true)
-	c.SetCookie("refresh-token", "", -1, "/", cfg.Domain, b, true)
+	c.SetCookie("refresh_token", "", -1, "/", cfg.Domain, b, true)
 }
 
 func ParseAccess(tokenStr string, cfg *config.Config) (*jwt.RegisteredClaims, error) {
