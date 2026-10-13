@@ -27,6 +27,7 @@ func CreateTodoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		userIDInterface, exists := c.Get("user_id")
 		if !exists {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "user_id not found in context"})
+			return
 		}
 
 		userID := userIDInterface.(string)
@@ -41,7 +42,8 @@ func CreateTodoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		todo, err := repository.CreateTodo(pool, input.Title, input.Completed, userID)
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "An internal server error occurred"})
+			return
 		}
 
 		c.JSON(http.StatusCreated, todo)
@@ -54,6 +56,7 @@ func GetAllTodosHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 
 		if !exists {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "user_id not found in context"})
+			return
 		}
 
 		userID := userIDInterface.(string)
@@ -61,7 +64,8 @@ func GetAllTodosHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		todos, err := repository.GetAllTodos(pool, userID)
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "An internal server error occurred"})
+			return
 		}
 
 		c.JSON(http.StatusOK, todos)
@@ -74,6 +78,7 @@ func GetTodoByID(pool *pgxpool.Pool) gin.HandlerFunc {
 
 		if !exists {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "user_id not found in context"})
+			return
 		}
 
 		userID := userIDInterface.(string)
@@ -93,7 +98,8 @@ func GetTodoByID(pool *pgxpool.Pool) gin.HandlerFunc {
 				c.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
 				return
 			}
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "An internal server error occurred"})
+			return
 		}
 
 		c.JSON(http.StatusOK, todo)
@@ -106,6 +112,7 @@ func UpdateTodo(pool *pgxpool.Pool) gin.HandlerFunc {
 
 		if !exists {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "user_id not found in context"})
+			return
 		}
 
 		userID := userIDInterface.(string)
@@ -131,7 +138,7 @@ func UpdateTodo(pool *pgxpool.Pool) gin.HandlerFunc {
 				c.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
 				return
 			}
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "An internal server error occurred"})
 			return
 		}
 
@@ -145,6 +152,7 @@ func DeleteTodo(pool *pgxpool.Pool) gin.HandlerFunc {
 
 		if !exists {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "user_id not found in context"})
+			return
 		}
 
 		userID := userIDInterface.(string)
@@ -162,7 +170,7 @@ func DeleteTodo(pool *pgxpool.Pool) gin.HandlerFunc {
 				c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 				return
 			}
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "An internal server error occurred"})
 			return
 		}
 
