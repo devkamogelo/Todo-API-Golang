@@ -46,7 +46,8 @@ func CreateUserHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(registerRequest.Password), bcrypt.DefaultCost)
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password " + err.Error()})
+			c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
 			return
 		}
 
@@ -62,7 +63,8 @@ func CreateUserHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Email already registered"})
 				return
 			}
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "An internal server error occurred"})
 			return
 		}
 
