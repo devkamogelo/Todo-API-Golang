@@ -1,0 +1,4 @@
+## 2025-01-20 - [Fix fail-open and information disclosure in Gin handlers]
+**Vulnerability:** Gin handlers in `todo_handler.go` lacked `return` statements after responding to internal server errors (like missing context or database errors). These errors were also exposing sensitive raw stack traces (`err.Error()`) to the client.
+**Learning:** The absence of explicit `return` statements allowed execution to continue (fail-open) leading to possible panics or unintended multiple responses. Exposing raw errors is a significant information disclosure risk.
+**Prevention:** Always append a `return` immediately following `c.JSON()` or `c.Error()` in Gin handlers when an error condition is met. Use `c.Error(err)` for secure server-side logging of sensitive internal details and respond to the client with a generic JSON message (e.g., `gin.H{"error": "Internal server error"}`).
