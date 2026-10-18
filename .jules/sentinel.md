@@ -1,0 +1,4 @@
+## 2024-05-24 - Missing Return Statements in Gin Handlers Cause Fail-Open Vulnerabilities
+**Vulnerability:** Multiple endpoints in `todo_handler.go` responded with HTTP 500 errors but failed to execute a `return` statement, causing the handler to continue executing in a fail-open manner. Additionally, they leaked internal error details to the client.
+**Learning:** In Go Gin, calling `c.JSON()` or `c.Error()` does not stop the execution of the handler. If an error is encountered, the handler must explicitly `return` to prevent subsequent logic from running. Returning internal errors directly also exposes internal database structures or system details to potential attackers.
+**Prevention:** Always follow `c.JSON()` with a `return` statement when handling an error to halt execution immediately. Use `c.Error(err)` to securely log the internal error on the server side and send a generic "Internal server error" message to the client.
