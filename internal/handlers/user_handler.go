@@ -156,13 +156,13 @@ func LogoutHandler(cfg *config.Config, rds *store.Redis) gin.HandlerFunc {
 		ctx := context.Background()
 
 		if acc != "" {
-			if claims, err := middleware.ParseAccess(acc, cfg); err != nil {
+			if claims, err := middleware.ParseAccess(acc, cfg); err == nil {
 				_ = rds.DelJTI(ctx, claims.ID)
 			}
 		}
 
 		if ref != "" {
-			if claims, err := middleware.ParseRefresh(ref, cfg); err != nil {
+			if claims, err := middleware.ParseRefresh(ref, cfg); err == nil {
 				_ = rds.DelJTI(ctx, claims.ID)
 			}
 		}
