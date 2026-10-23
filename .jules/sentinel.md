@@ -1,0 +1,4 @@
+## 2024-10-23 - Fail-Open Vulnerability and Information Disclosure in Gin Handlers
+**Vulnerability:** Missing `return` statements after handling errors in Gin handlers (`c.JSON`), causing execution to continue (fail-open) and potentially panicking due to nil pointers. Also, returning raw internal error strings in 500 responses leads to information disclosure.
+**Learning:** Developers often forget that `c.JSON()` or `c.Error()` in Gin does not stop execution of the handler. Exposing raw errors (e.g. `err.Error()`) on internal failures provides attackers with insights into the system's architecture and potential vulnerabilities.
+**Prevention:** Always follow error responses with a `return` statement immediately. Use `c.Error(err)` to securely log the internal error and return generic error messages for 500 internal server errors.
