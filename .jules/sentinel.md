@@ -1,0 +1,4 @@
+## 2023-10-24 - Gin Handler Fail-Open and Info Disclosure
+**Vulnerability:** Gin handlers missing `return` statements after error responses like `c.JSON(...)` allowing execution to continue into privileged sections (fail-open), combined with raw error strings (`err.Error()`) being returned to users revealing internal implementation details on 500 responses.
+**Learning:** Developers sometimes forget that `c.JSON()` or `c.AbortWithStatusJSON()` do not halt execution of the function block; a `return` is explicitly required. Also, raw error values leak potentially sensitive tech stack/database details.
+**Prevention:** Always write `return` immediately after `c.JSON()` on an error path in Gin. Use `c.Error(err)` for server-side logging and return a generic error message (e.g., "Internal server error") on 500s to avoid information disclosure.
