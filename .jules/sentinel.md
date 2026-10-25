@@ -1,0 +1,4 @@
+## 2024-05-18 - Internal Server Error Handling and Information Disclosure
+**Vulnerability:** Several API handlers returned raw `err.Error()` details for 500 errors and lacked a `return` statement, leading to both sensitive internal information disclosure and "fail-open" execution patterns where code continued running unexpectedly after the error.
+**Learning:** Developers often forget to include `return` after `c.JSON()` in Go Gin middleware/handlers, and raw `err.Error()` output is frequently left in place from development.
+**Prevention:** Always follow the convention: use `c.Error(err)` to securely log the internal error context for debugging, followed by `c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})`, and immediately follow with a `return` statement to halt execution safely.
