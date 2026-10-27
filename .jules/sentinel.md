@@ -1,0 +1,4 @@
+## 2024-05-15 - [Fail-Open Execution and Info Disclosure in Gin Handlers]
+**Vulnerability:** Several endpoints handled 500 internal server errors by invoking `c.JSON(http.StatusInternalServerError, ...)` without a subsequent `return` statement, allowing the execution flow to continue improperly. Additionally, the handlers leaked internal error details (`err.Error()`) to the client.
+**Learning:** Returning a JSON response via `c.JSON()` does not implicitly return or halt execution in Go/Gin. Failing to explicitly `return` can lead to fail-open vulnerabilities where unauthorized logic is still executed. Logging errors via generic JSON responses also leaks internal system details.
+**Prevention:** Always include a `return` statement immediately after handling errors with `c.JSON()` or `c.Error()` in Gin handlers. Use `c.Error(err)` to securely log the internal error before returning a generic JSON error message to prevent information disclosure.
