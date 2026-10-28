@@ -1,0 +1,4 @@
+## 2024-10-28 - Missing Returns & Information Disclosure in Gin Handlers
+**Vulnerability:** Several Gin handlers lacked `return` statements after error responses (leading to fail-open) and exposed raw internal error messages in 500 responses.
+**Learning:** Forgetting a `return` after `c.JSON()` in Gin allows the handler to continue execution, potentially resulting in panics, double-rendering, or unauthorized access. Furthermore, directly returning `err.Error()` in a 500 response risks disclosing sensitive system or database details to the user.
+**Prevention:** Always ensure a `return` statement immediately follows error handling (e.g., `c.JSON` or `c.Error`). For internal server errors, use `c.Error(err)` to securely log the actual error for developers/ops, and return a generic `c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})` to the client.
