@@ -1,0 +1,4 @@
+## 2024-03-09 - [Gin Handler Fail-Open Missing Return and Info Leakage]
+**Vulnerability:** Gin handlers omitted `return` statements after returning HTTP 500 error responses (`c.JSON(http.StatusInternalServerError, ...)`). Additionally, sensitive stack trace / error details (`err.Error()`) were returned directly to the client.
+**Learning:** In Gin, calling `c.JSON()` or `c.Error()` does not stop the execution of the handler function. If `return` is not explicitly called, execution continues (fail-open state). Passing `err.Error()` to `c.JSON()` leaks internal implementation details to the client instead of providing generic error responses.
+**Prevention:** Always write `return` immediately after responding with `c.JSON()` or calling `c.Error()` in Gin handlers. Enforce the usage of `c.Error(err)` for secure internal logging, and serve generic messages like "Internal server error" for `http.StatusInternalServerError` instead of directly propagating `err.Error()`.
