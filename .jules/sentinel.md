@@ -1,0 +1,4 @@
+## 2024-05-18 - Missing c.Error() in internal server error handlers
+**Vulnerability:** Internal server errors (500) return error details directly in the JSON response using `c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})`. This leads to Information Disclosure (stack traces, SQL errors, inner workings). Also missing `c.Error(err)` for secure internal logging, and missing `return` statements in some error paths which could lead to fail-open execution flows.
+**Learning:** Gin handlers need a standard way to handle 500s where the actual error is logged internally but a generic message is sent to the client. The `return` statement is critical after handling errors in Gin.
+**Prevention:** Always use `c.Error(err)` to log internal errors, return a generic error message `c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})`, and always `return` immediately.
