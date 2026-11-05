@@ -46,7 +46,8 @@ func CreateUserHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(registerRequest.Password), bcrypt.DefaultCost)
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password " + err.Error()})
+			c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 			return
 		}
 
@@ -62,7 +63,8 @@ func CreateUserHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Email already registered"})
 				return
 			}
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 			return
 		}
 
@@ -94,12 +96,14 @@ func LoginHandler(pool *pgxpool.Pool, cfg *config.Config, rds *store.Redis) gin.
 
 		tokens, err := middleware.IssueTokens(user.ID, cfg)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not issue token"})
+			c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 			return
 		}
 
 		if err = middleware.Persist(c, rds, tokens); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not persist token"})
+			c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 			return
 		}
 
@@ -133,12 +137,14 @@ func RefreshHandler(cfg *config.Config, rds *store.Redis) gin.HandlerFunc {
 
 		tokens, err := middleware.IssueTokens(claims.Subject, cfg)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not issue token"})
+			c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 			return
 		}
 
 		if err = middleware.Persist(c, rds, tokens); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not persist token"})
+			c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 			return
 		}
 
