@@ -1,0 +1,4 @@
+## 2024-11-05 - [Info Disclosure] Internal Server Error Handling
+**Vulnerability:** The application was directly exposing `err.Error()` in JSON responses when returning 500 Internal Server Errors in multiple handlers (e.g., `todo_handler.go`, `user_handler.go`). Also missing early returns after `c.JSON` in several places which would cause flow execution vulnerabilities.
+**Learning:** Returning detailed error messages directly to the client can leak sensitive information about the backend infrastructure, database schema, or internal logic, aiding attackers in reconnaissance. Fail-open scenarios can occur if a handler does not return immediately after handling an error.
+**Prevention:** Always log the actual error securely on the server using `c.Error(err)` and return a generic error message like `{"error": "Internal Server Error"}` to the client. Ensure to explicitly return after sending error responses to halt execution.
