@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"todo_api/internal/config"
@@ -46,7 +48,8 @@ func CreateUserHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(registerRequest.Password), bcrypt.DefaultCost)
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password " + err.Error()})
+			c.Error(fmt.Errorf("Failed to hash password: %w", err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 			return
 		}
 
@@ -62,7 +65,8 @@ func CreateUserHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Email already registered"})
 				return
 			}
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 			return
 		}
 
@@ -94,12 +98,14 @@ func LoginHandler(pool *pgxpool.Pool, cfg *config.Config, rds *store.Redis) gin.
 
 		tokens, err := middleware.IssueTokens(user.ID, cfg)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not issue token"})
+			c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 			return
 		}
 
 		if err = middleware.Persist(c, rds, tokens); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not persist token"})
+			c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 			return
 		}
 
@@ -133,12 +139,14 @@ func RefreshHandler(cfg *config.Config, rds *store.Redis) gin.HandlerFunc {
 
 		tokens, err := middleware.IssueTokens(claims.Subject, cfg)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not issue token"})
+			c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 			return
 		}
 
 		if err = middleware.Persist(c, rds, tokens); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not persist token"})
+			c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 			return
 		}
 
@@ -178,7 +186,8 @@ func TestProtectedHandler() gin.HandlerFunc {
 		userID, exists := c.Get("user_id")
 
 		if !exists {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "user_id not found in context"})
+			c.Error(errors.New("user_id not found in context"))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 			return
 		}
 
