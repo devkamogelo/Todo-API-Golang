@@ -26,7 +26,9 @@ func CreateTodoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 
 		userIDInterface, exists := c.Get("user_id")
 		if !exists {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "user_id not found in context"})
+			c.Error(errors.New("user_id not found in context"))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			return
 		}
 
 		userID := userIDInterface.(string)
@@ -41,7 +43,9 @@ func CreateTodoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		todo, err := repository.CreateTodo(pool, input.Title, input.Completed, userID)
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			return
 		}
 
 		c.JSON(http.StatusCreated, todo)
@@ -53,7 +57,9 @@ func GetAllTodosHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		userIDInterface, exists := c.Get("user_id")
 
 		if !exists {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "user_id not found in context"})
+			c.Error(errors.New("user_id not found in context"))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			return
 		}
 
 		userID := userIDInterface.(string)
@@ -61,7 +67,9 @@ func GetAllTodosHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		todos, err := repository.GetAllTodos(pool, userID)
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			return
 		}
 
 		c.JSON(http.StatusOK, todos)
@@ -73,7 +81,9 @@ func GetTodoByID(pool *pgxpool.Pool) gin.HandlerFunc {
 		userIDInterface, exists := c.Get("user_id")
 
 		if !exists {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "user_id not found in context"})
+			c.Error(errors.New("user_id not found in context"))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			return
 		}
 
 		userID := userIDInterface.(string)
@@ -93,7 +103,9 @@ func GetTodoByID(pool *pgxpool.Pool) gin.HandlerFunc {
 				c.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
 				return
 			}
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			return
 		}
 
 		c.JSON(http.StatusOK, todo)
@@ -105,7 +117,9 @@ func UpdateTodo(pool *pgxpool.Pool) gin.HandlerFunc {
 		userIDInterface, exists := c.Get("user_id")
 
 		if !exists {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "user_id not found in context"})
+			c.Error(errors.New("user_id not found in context"))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			return
 		}
 
 		userID := userIDInterface.(string)
@@ -131,7 +145,8 @@ func UpdateTodo(pool *pgxpool.Pool) gin.HandlerFunc {
 				c.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
 				return
 			}
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 			return
 		}
 
@@ -144,7 +159,9 @@ func DeleteTodo(pool *pgxpool.Pool) gin.HandlerFunc {
 		userIDInterface, exists := c.Get("user_id")
 
 		if !exists {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "user_id not found in context"})
+			c.Error(errors.New("user_id not found in context"))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			return
 		}
 
 		userID := userIDInterface.(string)
@@ -159,10 +176,11 @@ func DeleteTodo(pool *pgxpool.Pool) gin.HandlerFunc {
 		err = repository.DeleteTodo(pool, id, userID)
 		if err != nil {
 			if err.Error() == "todo with id "+idStr+" not found" {
-				c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+				c.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
 				return
 			}
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 			return
 		}
 
