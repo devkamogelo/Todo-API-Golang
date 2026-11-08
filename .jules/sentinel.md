@@ -1,0 +1,4 @@
+## 2024-11-08 - Gin Handler Fail-Open & Information Disclosure
+**Vulnerability:** Handlers lacked explicit return statements after calling `c.JSON(http.StatusInternalServerError, ...)` or exposed detailed inner errors (e.g. `err.Error()`).
+**Learning:** Calling `c.JSON()` in Gin does NOT stop function execution. The program continues, leading to fail-open vulnerabilities where unauthenticated or unauthorized logic might still run, and exposing detailed internal errors to clients can reveal sensitive application details (like database schema).
+**Prevention:** Always add an explicit `return` statement immediately after error responses to halt execution. Use `c.Error(err)` to securely log the exact error internally for debugging, and return a sanitized, generic error message (e.g., `gin.H{"error": "Internal server error"}`) to the client.
